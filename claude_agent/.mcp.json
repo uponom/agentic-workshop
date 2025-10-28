@@ -1,0 +1,51 @@
+{
+  "mcpServers": {
+    "aws-api": {
+      "command": "uvx",
+      "args": [
+        "awslabs.aws-api-mcp-server@latest"
+      ],
+      "env": {
+        "AWS_REGION": "us-west-2"
+      }
+    },
+    "aws-knowledge": {
+      "command": "uvx",
+      "args": [
+        "fastmcp",
+        "run",
+        "https://knowledge-mcp.global.api.aws"
+      ]
+    },
+    "bedrock-agentcore": {
+      "command": "uvx",
+      "args": [
+        "awslabs.amazon-bedrock-agentcore-mcp-server@latest"
+      ],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
+    },
+    "strands-agents": {
+      "command": "uvx",
+      "args": [
+        "strands-agents-mcp-server"
+      ],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "INFO"
+      },
+      "autoApprove": [
+        "search_docs",
+        "fetch_doc"
+      ]
+    },
+    "aws-diagram": {
+      "command": "uvx",
+      "args": [
+        "--with",
+        "sarif-om,jschema_to_python",
+        "awslabs.aws-diagram-mcp-server@latest"
+      ]
+    }
+  }
+}
