@@ -10,7 +10,7 @@ from llama_index.core import (
 )
 from llama_index.core.agent.workflow import ReActAgent
 from llama_index.core.workflow import Context
-from llama_index.core.tools import QueryEngineTool, ToolMetadata
+from llama_index.core.tools import QueryEngineTool
 from llama_index.embeddings.bedrock import BedrockEmbedding
 from llama_index.llms.bedrock_converse import BedrockConverse
 
@@ -71,9 +71,10 @@ def create_query_engine_tool(query_engine, name, description):
     Returns:
     QueryEngineTool: A tool that can be used by the ReActAgent.
     """
-    return QueryEngineTool(
+    return QueryEngineTool.from_defaults(
         query_engine=query_engine,
-        metadata=ToolMetadata(name=name, description=description),
+        name=name,
+        description=description,
     )
 
 
@@ -109,22 +110,20 @@ async def main():
     ]
 
     # Create a ReActAgent with the query engine tools
-    # Using ReActAgent from workflow module
     agent = ReActAgent(
         tools=query_engine_tools,
         llm=Settings.llm,
         verbose=True,
     )
 
-    # Create a context to store the conversation history/session state
+    # Create a context to hold this session/state
     ctx = Context(agent)
 
     # Use the agent to answer a question
     print("Starting agent query...")
     print("=" * 60)
-    response = await agent.run(
-        "Compare revenue growth of Uber and Lyft from 2020 to 2021", ctx=ctx
-    )
+    handler = agent.run("Compare revenue growth of Uber and Lyft from 2020 to 2021", ctx=ctx)
+    response = await handler
     print(str(response))
 
 
