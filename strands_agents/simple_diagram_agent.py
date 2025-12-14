@@ -1,7 +1,5 @@
-from mcp import StdioServerParameters, stdio_client
 from strands import Agent
 from strands.models import BedrockModel
-from strands.tools.mcp import MCPClient
 from strands.tools import tool
 from diagrams import Diagram
 from diagrams.aws.compute import Lambda
@@ -15,35 +13,11 @@ import datetime
 # Создаем папку для диаграмм
 os.makedirs("generated-diagrams", exist_ok=True)
 
-aws_docs_client = MCPClient(
-    lambda: stdio_client(
-        StdioServerParameters(
-            command="uvx", args=["awslabs.aws-documentation-mcp-server@latest"]
-        )
-    )
-)
-
-# Убираем aws_diag_client чтобы агент не использовал неправильные MCP диаграммы
-# aws_diag_client = MCPClient(
-#     lambda: stdio_client(
-#         StdioServerParameters(
-#             command="uvx",
-#             args=[
-#                 "--with",
-#                 "sarif-om,jschema_to_python",
-#                 "awslabs.aws-diagram-mcp-server@latest",
-#             ],
-#         )
-#     )
-# )
-
-
 bedrock_model = BedrockModel(
     model_id="us.anthropic.claude-sonnet-4-5-20250929-v1:0",
     temperature=0.7,
 )
 
-# Импортируем генератор имен файлов
 def extract_keywords_from_query(query: str) -> list:
     """Извлекает ключевые слова из запроса пользователя"""
     aws_services = [
@@ -54,11 +28,7 @@ def extract_keywords_from_query(query: str) -> list:
     
     architecture_types = [
         'serverless', 'microservices', 'web application', 'web app', 'api', 'rest api',
-        'real-time', 'streaming', 'batch processing', 'data pipeline', 'etl'
-    ]
-    
-    industries = [
-        'ecommerce', 'e-commerce', 'fintech', 'healthcare', 'gaming', 'iot'
+        'real-time', 'streaming', 'batch processing', 'data pipeline', 'etl', 'music', 'spotify'
     ]
     
     query_lower = query.lower()
@@ -72,16 +42,11 @@ def extract_keywords_from_query(query: str) -> list:
         if arch_type in query_lower:
             keywords.append(arch_type.replace(' ', '_'))
     
-    for industry in industries:
-        if industry in query_lower:
-            keywords.append(industry)
-    
     return list(dict.fromkeys(keywords))[:3]
 
 def generate_filename_from_context(query: str = "") -> str:
     """Генерирует имя файла на основе контекста запроса"""
     import re
-    import datetime
     
     keywords = extract_keywords_from_query(query)
     
@@ -95,7 +60,6 @@ def generate_filename_from_context(query: str = "") -> str:
     
     return filename[:40] if len(filename) > 40 else filename
 
-# Локальный инструмент для создания диаграмм
 @tool
 def create_aws_diagram(
     diagram_type: str,
@@ -185,126 +149,47 @@ def create_aws_diagram(
         
         full_path = f"{filepath}.png"
         
-        # Сохраняем информацию для последующего использования
-        global last_generated_filename, last_generated_title
-        last_generated_filename = filename
-        last_generated_title = title
-        
         return f"✅ Диаграмма создана: {full_path}\n📁 Файл: {filename}\n📋 Заголовок: {title}\n🔗 Полный путь: {os.path.abspath(full_path)}"
         
     except Exception as e:
         return f"❌ Ошибка создания диаграммы: {str(e)}"
 
-# Глобальные переменные для хранения последних сгенерированных значений
-last_generated_filename = ""
-last_generated_title = ""
-
-# Функция для сохранения ответа агента
-def save_agent_response(response: str, filename: str = None, title: str = None):
-    """
-    Сохраняет ответ агента в markdown файл
-    
-    Args:
-        response: Ответ агента для сохранения
-        filename: Имя файла (без расширения) - если None, использует последний сгенерированный
-        title: Заголовок документа - если None, использует последний сгенерированный
-    """
-    try:
-        # Используем глобальные переменные если параметры не переданы
-        global last_generated_filename, last_generated_title
-        
-        if filename is None:
-            filename = last_generated_filename or f"aws_architecture_{datetime.datetime.now().strftime('%H%M')}"
-        if title is None:
-            title = last_generated_title or "AWS Architecture Analysis"
-            
-        md_filepath = f"generated-diagrams/{filename}.md"
-        
-        # Создаем содержимое markdown файла
-        markdown_content = f"""# {title}
-
-*Сгенерировано AWS Solutions Architect агентом*
-
----
-
-{response}
-
----
-
-**Файлы:**
-- 📊 Диаграмма: `{filename}.png`
-- 📝 Документация: `{filename}.md`
-
-*Создано: {os.path.basename(__file__)} в {os.getcwd()}*
-"""
-        
-        # Сохраняем файл
-        with open(md_filepath, 'w', encoding='utf-8') as f:
-            f.write(markdown_content)
-        
-        print(f"📝 Документация сохранена: {md_filepath}")
-        return md_filepath
-        
-    except Exception as e:
-        print(f"⚠️ Ошибка сохранения документации: {e}")
-        return None
-
 SYSTEM_PROMPT = """
 Вы - эксперт AWS Solutions Architect. Ваша задача - помочь клиентам понять лучшие практики построения на AWS и создать архитектурные диаграммы.
 
-Доступные инструменты:
-📚 Документация AWS:
-- read_documentation: Получить информацию о конкретных сервисах AWS
-- search_documentation: Найти релевантные темы в документации AWS
-- recommend: Получить архитектурные рекомендации
+У вас есть только один инструмент для создания диаграмм:
+🎨 create_aws_diagram - создает диаграммы локально (ОБЯЗАТЕЛЬНО используйте этот инструмент!)
 
-🎨 Создание диаграмм:
-- create_aws_diagram: Создает диаграммы локально (ЕДИНСТВЕННЫЙ инструмент для диаграмм!)
-
-КРИТИЧЕСКИ ВАЖНО: 
-1. Вы ДОЛЖНЫ создать визуальную диаграмму для каждого архитектурного запроса используя ТОЛЬКО create_aws_diagram
-2. НЕ используйте другие инструменты для создания диаграмм
-3. ВСЕГДА вызывайте create_aws_diagram ПЕРВЫМ делом перед детальным объяснением
-
-Типы диаграмм для create_aws_diagram:
+Типы диаграмм:
 - "static_website": S3 + CloudFront + Lambda
 - "serverless_api": API Gateway + Lambda + DynamoDB  
 - "web_app": Полная веб-архитектура
-- "music_streaming": Архитектура музыкального стриминга (для Spotify-подобных платформ)
+- "music_streaming": Архитектура музыкального стриминга
 - "custom": Простая кастомная архитектура
 
-Обязательный рабочий процесс:
+КРИТИЧЕСКИ ВАЖНО: 
+1. ВСЕГДА вызывайте create_aws_diagram ПЕРВЫМ делом для любого архитектурного запроса
+2. Передавайте оригинальный запрос пользователя как query_context
+3. Только после создания диаграммы предоставляйте детальное объяснение
+
+Пример:
 1. Вызов: create_aws_diagram(diagram_type="music_streaming", query_context="Спроектируй платформу для стриминга музыки как Spotify")
 2. Затем детальное архитектурное объяснение
 
-Всегда передавайте оригинальный запрос пользователя как query_context для автоматического именования файлов.
 Всегда предоставляйте комплексное архитектурное руководство с лучшими практиками и рабочими файлами диаграмм.
 """
 
-with aws_docs_client:
-    # Получаем только документационные MCP инструменты и добавляем локальный инструмент для диаграмм
-    mcp_tools = aws_docs_client.list_tools_sync()
-    all_tools = mcp_tools + [create_aws_diagram]
-    
-    agent = Agent(tools=all_tools, model=bedrock_model, system_prompt=SYSTEM_PROMPT)
+# Создаем агента только с локальным инструментом
+agent = Agent(tools=[create_aws_diagram], model=bedrock_model, system_prompt=SYSTEM_PROMPT)
 
-    # Тестируем создание диаграммы с динамическим именованием
-    print("🤖 Отправка запроса агенту...")
-    
-    # Добавляем PATH для Graphviz
-    import os
-    os.environ['PATH'] += ";C:\\Program Files\\Graphviz\\bin"
-    
-    # Пример запроса - агент сам определит имя файла и заголовок
-    user_query = "Спроектируй платформу для стриминга музыки как Spotify. ОБЯЗАТЕЛЬНО создай диаграмму архитектуры используя create_aws_diagram!"
-    
-    response = agent(user_query)
-    
-    print("\n📄 Ответ агента:")
-    print(response)
-    
-    # Сохраняем ответ агента в markdown файл (имя и заголовок определятся автоматически)
-    print("\n💾 Сохранение документации...")
-    save_agent_response(response)
-    
-    print("\n✨ Готово! Проверьте папку generated-diagrams/")
+# Тестируем создание диаграммы
+print("🤖 Отправка запроса агенту...")
+
+user_query = "Спроектируй платформу для стриминга музыки как Spotify"
+
+response = agent(user_query)
+
+print("\n📄 Ответ агента:")
+print(response)
+
+print("\n✨ Готово! Проверьте папку generated-diagrams/")

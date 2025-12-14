@@ -5,12 +5,13 @@ from strands_tools import http_request
 # Define a weather-focused system prompt
 WEATHER_SYSTEM_PROMPT = """You are a weather assistant with HTTP capabilities. You can:
 
-1. Make HTTP requests to the National Weather Service API
+1. Make HTTP requests to the Open-Meteo API
 2. Process and display weather forecast data
 3. Provide weather information for locations in Germany
 
 When retrieving weather information:
-1. First get the coordinates or grid information using https://api.weather.gov/points/{latitude},{longitude} or https://api.weather.gov/points/{zipcode}
+1. First get latitude and longitudethe for the city using https://geocoding-api.open-meteo.com/v1/search?name={cityname}
+2. Use the latitude and longitudethe from the previous step and get the weather using https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}
 2. Then use the returned forecast URL to get the actual forecast
 
 When displaying responses:
@@ -41,5 +42,5 @@ agent = Agent(
     model=bedrock_model,
 )
 response = agent(
-    "What's the weather like in Berlin (Germany)? Also how many words are in the response?"
+    "What's the weather like in Berlin? Also how many words are in the response? Дай также рекомендации что лучше одеть и надо ли брать с собой зонт. Give the answer in Russian."
 )

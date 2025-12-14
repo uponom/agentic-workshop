@@ -1,0 +1,27 @@
+# Core Streamlit dependencies
+streamlit>=1.28.0
+
+# Strands Agents framework
+strands-agents>=0.1.0
+strands-agents-tools>=0.1.0
+
+# AWS and MCP dependencies
+boto3>=1.34.0
+botocore>=1.34.0
+mcp>=1.0.0
+
+# Image processing and diagrams
+pillow>=10.0.0
+diagrams>=0.23.0
+
+# Testing dependencies
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+hypothesis>=6.82.0
+
+# Browser automation testing (Chrome DevTools MCP)
+# Note: Chrome DevTools MCP server will be used for browser automation testing
+
+# Utility dependencies
+requests>=2.31.0
+python-dateutil>=2.8.0
