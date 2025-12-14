@@ -483,16 +483,25 @@ def main():
         # Initialize session state
         initialize_session_state()
         
-        # Create generated-diagrams directory if it doesn't exist
+        # Create required directories if they don't exist
+        required_dirs = ["generated-diagrams", "logs", "test_screenshots"]
+        for dir_name in required_dirs:
+            try:
+                os.makedirs(dir_name, exist_ok=True)
+            except Exception as dir_error:
+                error_handler.handle_file_system_error(
+                    error=dir_error,
+                    operation="create_directory",
+                    file_path=dir_name,
+                    show_in_ui=True
+                )
+        
+        # Also create global generated-diagrams directory for compatibility
         try:
-            os.makedirs("generated-diagrams", exist_ok=True)
+            global_diagrams_dir = Path.cwd() / "generated-diagrams"
+            global_diagrams_dir.mkdir(parents=True, exist_ok=True)
         except Exception as dir_error:
-            error_handler.handle_file_system_error(
-                error=dir_error,
-                operation="create_directory",
-                file_path="generated-diagrams",
-                show_in_ui=True
-            )
+            logger.warning(f"Could not create global diagrams directory: {dir_error}")
         
         # Render application with coordinated layout
         render_coordinated_application()

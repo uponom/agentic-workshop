@@ -1,0 +1,13 @@
+{
+  "summary": {
+    "total_tests": 0,
+    "passed": 0,
+    "failed": 0,
+    "success_rate": 0.0,
+    "total_duration": 0.0,
+    "test_results": []
+  },
+  "test_results": [],
+  "generated_at": "2025-12-14T20:30:56.546265",
+  "app_url": "http://localhost:8501"
+}

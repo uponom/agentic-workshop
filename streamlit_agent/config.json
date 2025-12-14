@@ -1,0 +1,13 @@
+{
+  "port": 8501,
+  "host": "localhost",
+  "debug": false,
+  "log_level": "INFO",
+  "generated_diagrams_dir": "generated-diagrams",
+  "logs_dir": "logs",
+  "test_screenshots_dir": "test_screenshots",
+  "agent_timeout": 120,
+  "max_diagrams": 100,
+  "cleanup_old_diagrams": true,
+  "max_diagram_age_hours": 24
+}
